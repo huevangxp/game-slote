@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>3x3 Slot Machine</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #000;
+      color: #0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    
+    .slot-machine {
+      text-align: center;
+      background: #222;
+      padding: 25px 40px;
+      border-radius: 15px;
+      box-shadow: 0 0 40px #0f0;
+      max-width: 400px;
+    }
+    
+    .reels-container {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 25px 0;
+    }
+    
+    .reel {
+      width: 80px;
+      height: 240px; /* 3 symbols height */
+      background: #111;
+      border: 2px solid #0f0;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .symbols {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      transition: top 0.7s cubic-bezier(0.33, 1, 0.68, 1);
+    }
+    
+    .symbol {
+      height: 80px;
+      line-height: 80px;
+      font-size: 55px;
+      user-select: none;
+      text-align: center;
+      border-bottom: 1px solid #0f0;
+      background: #111;
+      color: #0f0;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    
+    .symbol.win {
+      background-color: #0f0;
+      color: #000;
+      font-weight: bold;
+      text-shadow: 0 0 8px #0f0;
+    }
+    
+    button {
+      padding: 12px 30px;
+      font-size: 20px;
+      background: #0f0;
+      border: none;
+      color: #000;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.3s;
+    }
+    
+    button:hover {
+      background: #0c0;
+    }
+    
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    
+    #result {
+      margin-top: 18px;
+      font-weight: bold;
+      font-size: 20px;
+      min-height: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="slot-machine">
+    <h1>🎰 3x3 Slot Machine 🎰</h1>
+    <p id="balance">💰 Balance: 1000 coins</p>
+
+    <div class="reels-container">
+      <div class="reel" id="reel0"><div class="symbols"></div></div>
+      <div class="reel" id="reel1"><div class="symbols"></div></div>
+      <div class="reel" id="reel2"><div class="symbols"></div></div>
+    </div>
+
+    <button id="spinBtn">Spin (100 coins)</button>
+    <p id="result"></p>
+  </div>
+
+  <script>
+    const symbols = ["🍒", "🍋", "🔔", "7️⃣", "🍀", "💎"];
+    let balance = 1000;
+    // import audio
+    const spinSound = new Audio('main-track.mp3');
+    const winSound = new Audio('win.mp3');
+    const loseSound = new Audio('lose.mp3'); 
+    const bet = 100;
+    const winReward = 500;
+
+    const reelCount = 3;
+    const visibleSymbols = 3;
+    const symbolHeight = 80;
+
+    // play 
+
+
+    const reels = [];
+    let isSpinning = false;
+
+    function createReelSymbols(reelEl) {
+      const container = reelEl.querySelector('.symbols');
+      container.style.top = '0px';
+      container.innerHTML = '';
+
+      // Create enough symbols to cover the spin animation (3 full loops + visible symbols)
+      const symbolCopies = 4; // Enough for animation
+      for (let i = 0; i < symbolCopies; i++) {
+        symbols.forEach(sym => {
+          const div = document.createElement('div');
+          div.classList.add('symbol');
+          div.textContent = sym;
+          container.appendChild(div);
+        });
+      }
+    }
+
+    function updateBalanceDisplay() {
+      document.getElementById("balance").textContent = `💰 Balance: ${balance} coins`;
+      document.getElementById("spinBtn").disabled = balance < bet || isSpinning;
+    }
+
+    function clearWinHighlights() {
+      document.querySelectorAll('.symbol').forEach(div => {
+        div.classList.remove('win');
+      });
+    }
+
+    function highlightWinningSymbols(finalPositions) {
+      reels.forEach((reel, i) => {
+        const symbolDivs = reel.container.querySelectorAll('.symbol');
+        // Calculate the position of the middle symbol in the visible area
+        const middleSymbolIndex = finalPositions[i] + visibleSymbols;
+        symbolDivs[middleSymbolIndex].classList.add('win');
+      });
+    }
+
+    function spin() {
+      if (isSpinning || balance < bet) return;
+
+      isSpinning = true;
+      clearWinHighlights();
+      document.getElementById("spinBtn").disabled = true;
+
+      balance -= bet;
+      updateBalanceDisplay();
+      document.getElementById("result").textContent = "🎲 Spinning...";
+
+      const finalPositions = [];
+      for(let i = 0; i < reelCount; i++) {
+        finalPositions.push(Math.floor(Math.random() * symbols.length));
+      }
+
+      const spinDuration = 2000;
+      const delayBetweenReels = 300;
+      const totalAnimationTime = spinDuration + (reelCount - 1) * delayBetweenReels;
+
+      reels.forEach((reel, i) => {
+        // Reset position without animation
+        reel.container.style.transition = 'none';
+        reel.container.style.top = '0px';
+        
+        // Force reflow
+        void reel.container.offsetHeight;
+
+        setTimeout(() => {
+          reel.container.style.transition = `top ${spinDuration}ms cubic-bezier(0.33,1,0.68,1)`;
+          
+          // Calculate total movement (3 full loops + final position)
+          const loops = 3;
+          const totalSymbols = symbols.length * loops + finalPositions[i];
+          const topValue = -(totalSymbols * symbolHeight);
+          reel.container.style.top = `${topValue}px`;
+        }, i * delayBetweenReels);
+      });
+
+      setTimeout(() => {
+        isSpinning = false;
+        
+        // Check for win
+        const middleRowSymbols = finalPositions.map(pos => {
+          return symbols[pos % symbols.length];
+        });
+
+        const firstSymbol = middleRowSymbols[0];
+        const isWin = middleRowSymbols.every(sym => sym === firstSymbol);
+
+        if (isWin) {
+          balance += winReward;
+          document.getElementById("result").textContent = `🎉 WIN! Middle line matched ${firstSymbol}. You win ${winReward} coins!`;
+          highlightWinningSymbols(finalPositions);
+        } else {
+          document.getElementById("result").textContent = "😢 You lose. Try again!";
+        }
+        
+        updateBalanceDisplay();
+        
+        // Reset reels to show just the winning symbols without extra space
+        reels.forEach((reel, i) => {
+          reel.container.style.transition = 'none';
+          const visiblePosition = -(finalPositions[i] * symbolHeight);
+          reel.container.style.top = `${visiblePosition}px`;
+        });
+      }, totalAnimationTime);
+    }
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      for(let i = 0; i < reelCount; i++) {
+        const reelEl = document.getElementById(`reel${i}`);
+        createReelSymbols(reelEl);
+        reels.push({ container: reelEl.querySelector('.symbols') });
+      }
+      
+      document.getElementById('spinBtn').addEventListener('click', spin);
+      updateBalanceDisplay();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #000;
+    color: #0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+  
+  .slot-machine {
+    text-align: center;
+    background: #222;
+    padding: 25px 40px;
+    border-radius: 15px;
+    box-shadow: 0 0 40px #0f0;
+    max-width: 400px;
+  }
+  
+  .reels-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 25px 0;
+  }
+  
+  .reel {
+    width: 80px;
+    height: 240px; /* 3 symbols height */
+    background: #111;
+    border: 2px solid #0f0;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .symbols {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    transition: top 0.7s cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  
+  .symbol {
+    height: 80px; /* Each symbol is 80px tall */
+    line-height: 80px;
+    font-size: 55px;
+    user-select: none;
+    text-align: center;
+    border-bottom: 1px solid #0f0;
+    background: #111;
+    color: #0f0;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  .symbol.win {
+    background-color: #0f0;
+    color: #000;
+    font-weight: bold;
+    text-shadow: 0 0 8px #0f0;
+  }
+  
+  button {
+    padding: 12px 30px;
+    font-size: 20px;
+    background: #0f0;
+    border: none;
+    color: #000;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.3s;
+  }
+  
+  button:hover {
+    background: #0c0;
+  }
+  
+  #result {
+    margin-top: 18px;
+    font-weight: bold;
+    font-size: 20px;
+    min-height: 24px;
+  }
+  
